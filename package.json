@@ -1,12 +1,12 @@
 {
-  "name": "chantroom",
+  "name": "chatroom",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node src/server/index.js",
-    "dev": "nodemon src/server/index.js"
+    "start": "node server/app.js",
+    "dev": "nodemon server/app.js"
   },
   "repository": {
     "type": "git",
@@ -21,8 +21,19 @@
   },
   "homepage": "https://github.com/mengqh5/chantroom#readme",
   "dependencies": {
-    "express": "^5.1.0",
-    "nodemon": "^3.1.10",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.0",
+    "mysql2": "^3.14.1",
+    "path-to-regexp": "^6.2.2",
+    "router": "^2.2.0",
     "ws": "^8.18.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10",
+    "prettier": "^3.5.3"
   }
 }

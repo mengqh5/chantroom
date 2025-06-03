@@ -3,244 +3,413 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QQWeb聊天室</title>
+    <title>现代聊天室</title>
     <style>
-        body {
-            font-family: 'Microsoft YaHei', sans-serif;
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --background: #f5f6fa;
+            --message-bg: #ffffff;
+            --border-radius: 8px;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background: var(--background);
+            height: 100vh;
             display: flex;
             flex-direction: column;
-            height: 100vh;
         }
-        #chat-container {
-            flex: 1;
+
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            flex-grow: 1;
+            width: 100%;
+        }
+
+        .chat-header {
+            background: var(--primary);
+            color: white;
+            padding: 1rem;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+            box-shadow: var(--shadow);
+        }
+
+        .chat-main {
+            display: grid;
+            grid-template-columns: 1fr 3fr;
+            gap: 20px;
+            height: 70vh;
+        }
+
+        .users-list {
+            background: var(--message-bg);
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow-y: auto;
+        }
+
+        .messages-box {
+            background: var(--message-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
             display: flex;
+            flex-direction: column;
+        }
+
+        .messages-list {
+            flex-grow: 1;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+
+        .message {
+            margin-bottom: 1rem;
+            padding: 0.8rem;
+            background: var(--background);
+            border-radius: var(--border-radius);
+            max-width: 80%;
+        }
+
+        .message.self {
+            background: var(--secondary);
+            color: white;
+            margin-left: auto;
+        }
+
+        .message-form {
+            padding: 1rem;
+            display: flex;
+            gap: 10px;
+            border-top: 1px solid #eee;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 0.8rem;
             border: 1px solid #ddd;
+            border-radius: var(--border-radius);
         }
-        #users {
-            width: 200px;
-            border-right: 1px solid #ddd;
-            padding: 10px;
-            overflow-y: auto;
-        }
-        #messages {
-            flex: 1;
-            padding: 10px;
-            overflow-y: auto;
-        }
-        #input-area {
-            padding: 10px;
-            border-top: 1px solid #ddd;
-            display: flex;
-            position: relative;
-        }
-        #message-input {
-            flex: 1;
-            padding: 8px;
-        }
+
         button {
-            padding: 8px 15px;
-            margin-left: 10px;
-            background-color: #12b7f5;
+            padding: 0.8rem 1.5rem;
+            background: var(--secondary);
             color: white;
             border: none;
+            border-radius: var(--border-radius);
             cursor: pointer;
+            transition: opacity 0.3s;
         }
-        .message {
-            margin-bottom: 10px;
+
+        button:hover {
+            opacity: 0.9;
         }
-        #emoji-picker {
-            display: none;
-            position: absolute;
-            bottom: 50px;
-            background: #fff;
-            border: 1px solid #ccc;
-            padding: 5px;
-            z-index: 100;
-        }
-        .emoji {
-            cursor: pointer;
-            font-size: 20px;
-            margin: 2px;
+
+        @media (max-width: 768px) {
+            .chat-main {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <h1 style="text-align: center;">QQWeb聊天室</h1>
-    <div id="chat-container">
-        <div id="users"></div>
-        <div id="messages"></div>
-    </div>
-    <div id="input-area">
-        <input type="text" id="message-input" placeholder="输入消息...">
-        <button id="send-btn">发送</button>
-        <button id="emoji-btn">表情</button>
-        <div id="emoji-picker">
-            <span class="emoji">😀</span>
-            <span class="emoji">😂</span>
-            <span class="emoji">😍</span>
-            <span class="emoji">🤔</span>
-            <span class="emoji">👍</span>
-            <span class="emoji">❤️</span>
-            <span class="emoji">😡</span>
-            <span class="emoji">🎉</span>
+    <div id="authFlow" style="display: none;">
+        <div class="auth-form">
+            <h2>用户登录</h2>
+            <input type="text" id="loginUsername" placeholder="用户名">
+            <input type="password" id="loginPassword" placeholder="密码">
+            <button onclick="handleLogin()">登录</button>
+            <button onclick="showRegister()">注册新账号</button>
         </div>
-        <input type="file" id="file-input" accept="image/*" style="display: none;">
-        <button id="image-btn">图片</button>
+
+        <div class="auth-form" style="display: none;" id="registerForm">
+            <h2>用户注册</h2>
+            <input type="text" id="registerUsername" placeholder="用户名">
+            <input type="password" id="registerPassword" placeholder="密码">
+            <div class="avatar-upload">
+                <input type="file" id="avatarInput" accept="image/*" hidden>
+                <img src="/avatars/default.png" class="avatar-preview" id="avatarPreview">
+                <button onclick="document.getElementById('avatarInput').click()">选择头像</button>
+            </div>
+            <button onclick="handleRegister()">完成注册</button>
+            <button onclick="showLogin()">返回登录</button>
+        </div>
+    </div>
+
+    <div class="container" style="display: none;" id="mainApp">
+        <header class="chat-header">
+            <div class="user-profile">
+                <img src="/avatars/default.png" class="avatar-preview" id="userAvatar">
+                <span id="usernameDisplay"></span>
+                <button onclick="logout()" style="margin-left: auto;">退出登录</button>
+            </div>
+            <div id="connection-status">连接中...</div>
+        </header>
+        
+        <main class="chat-main">
+            <aside class="users-list">
+                <div class="friends-header">
+                    <h3>好友列表</h3>
+                    <button onclick="showAddFriend()">+ 添加好友</button>
+                </div>
+                <div id="addFriendForm" style="display: none;">
+                    <input type="text" id="friendUsername" placeholder="输入用户名">
+                    <button onclick="sendFriendRequest()">发送请求</button>
+                </div>
+                <ul id="friends"></ul>
+            </aside>
+            
+            <section class="messages-box">
+                <div class="messages-list" id="messages"></div>
+                
+                <form class="message-form" id="messageForm">
+                    <div class="message-header">
+                        <span id="currentChat"></span>
+                        <div class="chat-type">
+                            <select id="chatType" onchange="changeChatType()">
+                                <option value="general">群聊</option>
+                                <option value="private">私聊</option>
+                            </select>
+                        </div>
+                    </div>
+                    <input type="text" id="messageInput" placeholder="输入消息..." autocomplete="off">
+                    <button type="submit">发送</button>
+                </form>
+            </section>
+        </main>
     </div>
 
     <script>
-        // 初始化IndexedDB
-        let db
-        const initDB = new Promise((resolve, reject) => {
-            const request = indexedDB.open('ChatDB', 1)
-            
-            request.onerror = (event) => {
-                console.error('数据库打开失败:', event.target.error)
-                reject(event.target.error)
-            }
-            
-            request.onsuccess = (event) => {
-                db = event.target.result
-                console.log('数据库打开成功')
-                resolve(db)
-            }
-            
-            request.onupgradeneeded = (event) => {
-                const db = event.target.result
-                if (!db.objectStoreNames.contains('messages')) {
-                    const store = db.createObjectStore('messages', { keyPath: 'id', autoIncrement: true })
-                    store.createIndex('timestamp', 'timestamp', { unique: false })
-                }
-            }
-        })
+const socket = new WebSocket('ws://localhost:3000/ws');
+        const messagesList = document.getElementById('messages');
+        const messageForm = document.getElementById('messageForm');
+        const messageInput = document.getElementById('messageInput');
+        const statusDiv = document.getElementById('connection-status');
 
-        const ws = new WebSocket('ws://localhost:3000')
-        const messageInput = document.getElementById('message-input')
-        const sendBtn = document.getElementById('send-btn')
-        const messagesDiv = document.getElementById('messages')
-        const emojiBtn = document.getElementById('emoji-btn')
-        const emojiPicker = document.getElementById('emoji-picker')
-        const fileInput = document.getElementById('file-input')
-        const imageBtn = document.getElementById('image-btn')
+        // WebSocket事件处理
+        socket.onopen = () => {
+            statusDiv.textContent = '已连接';
+            statusDiv.style.color = '#2ecc71';
+        };
 
-        // 表情按钮点击事件
-        emojiBtn.addEventListener('click', () => {
-            emojiPicker.style.display = emojiPicker.style.display === 'block' ? 'none' : 'block'
-        })
+        socket.onclose = () => {
+            statusDiv.textContent = '连接已断开';
+            statusDiv.style.color = '#e74c3c';
+        };
 
-        // 表情选择事件
-        document.querySelectorAll('.emoji').forEach(emoji => {
-            emoji.addEventListener('click', () => {
-                messageInput.value += emoji.textContent
-                emojiPicker.style.display = 'none'
-            })
-        })
+        socket.onerror = (error) => {
+            console.error('WebSocket错误:', error);
+            statusDiv.textContent = '连接错误';
+            statusDiv.style.color = '#e74c3c';
+        };
 
-        // 连接成功
-        ws.onopen = () => {
-            console.log('已连接到服务器')
-        }
+        socket.onmessage = (event) => {
+            const msg = JSON.parse(event.data);
+            appendMessage(msg);
+            messagesList.scrollTop = messagesList.scrollHeight;
+        };
 
-        // 接收消息
-        ws.onmessage = async (event) => {
-            const message = JSON.parse(event.data)
-            displayMessage(message)
-            
-            try {
-                await initDB
-                const tx = db.transaction('messages', 'readwrite')
-                const store = tx.objectStore('messages')
-                store.add({
-                    ...message,
-                    id: Date.now()
-                })
-            } catch (e) {
-                console.error('消息存储失败:', e)
-            }
-        }
-
-        // 发送文本消息
-        sendBtn.addEventListener('click', () => {
-            const text = messageInput.value.trim()
-            if (text) {
+        // 消息提交处理
+        messageForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const content = messageInput.value.trim();
+            if (content) {
                 const message = {
                     type: 'text',
-                    content: text,
-                    timestamp: new Date().toLocaleTimeString()
-                }
-                ws.send(JSON.stringify(message))
-                messageInput.value = ''
+                    content: content,
+                    sessionId: 'general' // 示例会话ID
+                };
+                socket.send(JSON.stringify(message));
+                messageInput.value = '';
             }
-        })
+        });
 
-        // 发送图片
-        imageBtn.addEventListener('click', () => {
-            fileInput.click()
-        })
+        // 添加消息到列表
+        function appendMessage(msg) {
+            const div = document.createElement('div');
+            div.className = `message ${msg.sender === '当前用户' ? 'self' : ''}`;
+            div.innerHTML = `
+                <div class="message-header">
+                    <strong>${msg.sender}</strong>
+                    <small>${new Date(msg.timestamp).toLocaleTimeString()}</small>
+                </div>
+                <div class="message-content">${msg.content}</div>
+            `;
+            messagesList.appendChild(div);
+        }
 
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0]
-            if (file) {
-                const reader = new FileReader()
-                reader.onload = (event) => {
-                    const message = {
-                        type: 'image',
-                        content: event.target.result,
-                        timestamp: new Date().toLocaleTimeString()
-                    }
-                    ws.send(JSON.stringify(message))
-                }
-                reader.readAsDataURL(file)
-            }
-        })
+        // 认证相关功能
+        let currentUser = null;
 
-        // 加载历史消息
-        async function loadHistory() {
-            try {
-                await initDB
-                const tx = db.transaction('messages', 'readonly')
-                const store = tx.objectStore('messages')
-                const index = store.index('timestamp')
-                const request = index.openCursor(null, 'prev')
-                
-                request.onsuccess = (event) => {
-                    const cursor = event.target.result
-                    if (cursor) {
-                        displayMessage(cursor.value)
-                        cursor.continue()
-                    }
-                }
-            } catch (e) {
-                console.error('加载历史消息失败:', e)
+        // 显示登录注册界面
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('authFlow').style.display = 'block';
+        });
+
+        async function handleLogin() {
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: document.getElementById('loginUsername').value,
+                    password: document.getElementById('loginPassword').value
+                })
+            });
+            
+            const data = await response.json();
+            if (response.ok) {
+                currentUser = data.user;
+                showMainApp();
+            } else {
+                alert(data.error);
             }
         }
 
-        // 显示消息
-        function displayMessage(message) {
-            const messageDiv = document.createElement('div')
-            messageDiv.className = 'message'
-            
-            if (message.type === 'text') {
-                messageDiv.textContent = `${message.timestamp}: ${message.content}`
-            } else if (message.type === 'image') {
-                const img = document.createElement('img')
-                img.src = message.content
-                img.style.maxWidth = '200px'
-                messageDiv.appendChild(img)
-                const timeSpan = document.createElement('span')
-                timeSpan.textContent = message.timestamp
-                messageDiv.appendChild(document.createElement('br'))
-                messageDiv.appendChild(timeSpan)
+        async function handleRegister() {
+            const formData = new FormData();
+            formData.append('avatar', document.getElementById('avatarInput').files[0]);
+            formData.append('username', document.getElementById('registerUsername').value);
+            formData.append('password', document.getElementById('registerPassword').value);
+
+            const response = await fetch('/api/register', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                alert('注册成功，请登录');
+                showLogin();
+            } else {
+                const error = await response.json();
+                alert(error.error);
             }
-            
-            messagesDiv.appendChild(messageDiv)
-            messagesDiv.scrollTop = messagesDiv.scrollHeight
         }
 
-        // 页面加载时读取历史消息
-        window.addEventListener('DOMContentLoaded', loadHistory)
+        function showMainApp() {
+            document.getElementById('authFlow').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            document.getElementById('usernameDisplay').textContent = currentUser.username;
+            document.getElementById('userAvatar').src = currentUser.avatar;
+            loadFriends();
+        }
+
+        async function loadFriends() {
+            const response = await fetch('/api/friends', {
+                headers: { 'Authorization': `Bearer ${getCookie('token')}` }
+            });
+            const friends = await response.json();
+            const friendsList = document.getElementById('friends');
+            friendsList.innerHTML = friends.map(friend => `
+                <li class="friend-item" onclick="startPrivateChat('${friend.user_id}')">
+                    <img src="${friend.avatar_url || '/avatars/default.png'}" class="avatar-preview">
+                    <span>${friend.username}</span>
+                    <span class="status">${friend.status === 'pending' ? '待确认' : ''}</span>
+                </li>
+            `).join('');
+        }
+
+        async function sendFriendRequest() {
+            const username = document.getElementById('friendUsername').value;
+            const response = await fetch('/api/friends', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getCookie('token')}`
+                },
+                body: JSON.stringify({ friendUsername: username })
+            });
+            
+            if (response.ok) {
+                alert('请求已发送');
+                loadFriends();
+            } else {
+                const error = await response.json();
+                alert(error.error);
+            }
+        }
+
+        function changeChatType() {
+            const type = document.getElementById('chatType').value;
+            document.getElementById('currentChat').textContent = type === 'private' ? '私聊模式' : '群聊模式';
+        }
+
+        function getCookie(name) {
+            return document.cookie.split('; ').find(row => row.startsWith(name+'='))?.split('=')[1];
+        }
+
+        function logout() {
+            document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            location.reload();
+        }
+
+        // WebSocket消息扩展处理
+        socket.onmessage = (event) => {
+            const msg = JSON.parse(event.data);
+            switch(msg.type) {
+                case 'private':
+                    appendPrivateMessage(msg);
+                    break;
+                case 'friend-request':
+                    alert(`收到来自 ${msg.from} 的好友请求`);
+                    loadFriends();
+                    break;
+                default:
+                    appendMessage(msg);
+            }
+            messagesList.scrollTop = messagesList.scrollHeight;
+        };
+
+        function appendPrivateMessage(msg) {
+            const div = document.createElement('div');
+            div.className = `message private`;
+            div.innerHTML = `
+                <div class="message-header">
+                    <strong>私聊来自 ${msg.sender}</strong>
+                    <small>${new Date(msg.timestamp).toLocaleTimeString()}</small>
+                </div>
+                <div class="message-content">${msg.content}</div>
+            `;
+            messagesList.appendChild(div);
+        }
+
+        function startPrivateChat(userId) {
+            document.getElementById('chatType').value = 'private';
+            changeChatType();
+            // 实现私聊会话初始化逻辑
+        }
+
+        // 头像预览
+        document.getElementById('avatarInput').addEventListener('change', function(e) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                document.getElementById('avatarPreview').src = event.target.result;
+            }
+            reader.readAsDataURL(e.target.files[0]);
+        });
+
+        function showRegister() {
+            document.getElementById('registerForm').style.display = 'block';
+            document.querySelector('#authFlow > .auth-form').style.display = 'none';
+        }
+
+        function showLogin() {
+            document.getElementById('registerForm').style.display = 'none';
+            document.querySelector('#authFlow > .auth-form').style.display = 'block';
+        }
+
+        function showAddFriend() {
+            document.getElementById('addFriendForm').style.display = 'block';
+        }
     </script>
 </body>
 </html>
