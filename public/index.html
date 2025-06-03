@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QQWeb聊天室</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        #chat-container {
+            flex: 1;
+            display: flex;
+            border: 1px solid #ddd;
+        }
+        #users {
+            width: 200px;
+            border-right: 1px solid #ddd;
+            padding: 10px;
+            overflow-y: auto;
+        }
+        #messages {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+        }
+        #input-area {
+            padding: 10px;
+            border-top: 1px solid #ddd;
+            display: flex;
+            position: relative;
+        }
+        #message-input {
+            flex: 1;
+            padding: 8px;
+        }
+        button {
+            padding: 8px 15px;
+            margin-left: 10px;
+            background-color: #12b7f5;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .message {
+            margin-bottom: 10px;
+        }
+        #emoji-picker {
+            display: none;
+            position: absolute;
+            bottom: 50px;
+            background: #fff;
+            border: 1px solid #ccc;
+            padding: 5px;
+            z-index: 100;
+        }
+        .emoji {
+            cursor: pointer;
+            font-size: 20px;
+            margin: 2px;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">QQWeb聊天室</h1>
+    <div id="chat-container">
+        <div id="users"></div>
+        <div id="messages"></div>
+    </div>
+    <div id="input-area">
+        <input type="text" id="message-input" placeholder="输入消息...">
+        <button id="send-btn">发送</button>
+        <button id="emoji-btn">表情</button>
+        <div id="emoji-picker">
+            <span class="emoji">😀</span>
+            <span class="emoji">😂</span>
+            <span class="emoji">😍</span>
+            <span class="emoji">🤔</span>
+            <span class="emoji">👍</span>
+            <span class="emoji">❤️</span>
+            <span class="emoji">😡</span>
+            <span class="emoji">🎉</span>
+        </div>
+        <input type="file" id="file-input" accept="image/*" style="display: none;">
+        <button id="image-btn">图片</button>
+    </div>
+
+    <script>
+        // 初始化IndexedDB
+        let db
+        const initDB = new Promise((resolve, reject) => {
+            const request = indexedDB.open('ChatDB', 1)
+            
+            request.onerror = (event) => {
+                console.error('数据库打开失败:', event.target.error)
+                reject(event.target.error)
+            }
+            
+            request.onsuccess = (event) => {
+                db = event.target.result
+                console.log('数据库打开成功')
+                resolve(db)
+            }
+            
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result
+                if (!db.objectStoreNames.contains('messages')) {
+                    const store = db.createObjectStore('messages', { keyPath: 'id', autoIncrement: true })
+                    store.createIndex('timestamp', 'timestamp', { unique: false })
+                }
+            }
+        })
+
+        const ws = new WebSocket('ws://localhost:3000')
+        const messageInput = document.getElementById('message-input')
+        const sendBtn = document.getElementById('send-btn')
+        const messagesDiv = document.getElementById('messages')
+        const emojiBtn = document.getElementById('emoji-btn')
+        const emojiPicker = document.getElementById('emoji-picker')
+        const fileInput = document.getElementById('file-input')
+        const imageBtn = document.getElementById('image-btn')
+
+        // 表情按钮点击事件
+        emojiBtn.addEventListener('click', () => {
+            emojiPicker.style.display = emojiPicker.style.display === 'block' ? 'none' : 'block'
+        })
+
+        // 表情选择事件
+        document.querySelectorAll('.emoji').forEach(emoji => {
+            emoji.addEventListener('click', () => {
+                messageInput.value += emoji.textContent
+                emojiPicker.style.display = 'none'
+            })
+        })
+
+        // 连接成功
+        ws.onopen = () => {
+            console.log('已连接到服务器')
+        }
+
+        // 接收消息
+        ws.onmessage = async (event) => {
+            const message = JSON.parse(event.data)
+            displayMessage(message)
+            
+            try {
+                await initDB
+                const tx = db.transaction('messages', 'readwrite')
+                const store = tx.objectStore('messages')
+                store.add({
+                    ...message,
+                    id: Date.now()
+                })
+            } catch (e) {
+                console.error('消息存储失败:', e)
+            }
+        }
+
+        // 发送文本消息
+        sendBtn.addEventListener('click', () => {
+            const text = messageInput.value.trim()
+            if (text) {
+                const message = {
+                    type: 'text',
+                    content: text,
+                    timestamp: new Date().toLocaleTimeString()
+                }
+                ws.send(JSON.stringify(message))
+                messageInput.value = ''
+            }
+        })
+
+        // 发送图片
+        imageBtn.addEventListener('click', () => {
+            fileInput.click()
+        })
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0]
+            if (file) {
+                const reader = new FileReader()
+                reader.onload = (event) => {
+                    const message = {
+                        type: 'image',
+                        content: event.target.result,
+                        timestamp: new Date().toLocaleTimeString()
+                    }
+                    ws.send(JSON.stringify(message))
+                }
+                reader.readAsDataURL(file)
+            }
+        })
+
+        // 加载历史消息
+        async function loadHistory() {
+            try {
+                await initDB
+                const tx = db.transaction('messages', 'readonly')
+                const store = tx.objectStore('messages')
+                const index = store.index('timestamp')
+                const request = index.openCursor(null, 'prev')
+                
+                request.onsuccess = (event) => {
+                    const cursor = event.target.result
+                    if (cursor) {
+                        displayMessage(cursor.value)
+                        cursor.continue()
+                    }
+                }
+            } catch (e) {
+                console.error('加载历史消息失败:', e)
+            }
+        }
+
+        // 显示消息
+        function displayMessage(message) {
+            const messageDiv = document.createElement('div')
+            messageDiv.className = 'message'
+            
+            if (message.type === 'text') {
+                messageDiv.textContent = `${message.timestamp}: ${message.content}`
+            } else if (message.type === 'image') {
+                const img = document.createElement('img')
+                img.src = message.content
+                img.style.maxWidth = '200px'
+                messageDiv.appendChild(img)
+                const timeSpan = document.createElement('span')
+                timeSpan.textContent = message.timestamp
+                messageDiv.appendChild(document.createElement('br'))
+                messageDiv.appendChild(timeSpan)
+            }
+            
+            messagesDiv.appendChild(messageDiv)
+            messagesDiv.scrollTop = messagesDiv.scrollHeight
+        }
+
+        // 页面加载时读取历史消息
+        window.addEventListener('DOMContentLoaded', loadHistory)
+    </script>
+</body>
+</html>
