@@ -134,13 +134,8 @@
 
         <div class="auth-form" style="display: none;" id="registerForm">
             <h2>用户注册</h2>
-            <input type="text" id="registerUsername" placeholder="用户名">
-            <input type="password" id="registerPassword" placeholder="密码">
-            <div class="avatar-upload">
-                <input type="file" id="avatarInput" accept="image/*" hidden>
-                <img src="/avatars/default.png" class="avatar-preview" id="avatarPreview">
-                <button onclick="document.getElementById('avatarInput').click()">选择头像</button>
-            </div>
+            <input type="text" id="registerAccount" placeholder="用户名">
+            <input type="password" id="registerSecret" placeholder="密码">
             <button onclick="handleRegister()">完成注册</button>
             <button onclick="showLogin()">返回登录</button>
         </div>
@@ -276,14 +271,13 @@ const socket = new WebSocket('ws://localhost:3000/ws');
         }
 
         async function handleRegister() {
-            const formData = new FormData();
-            formData.append('avatar', document.getElementById('avatarInput').files[0]);
-            formData.append('username', document.getElementById('registerUsername').value);
-            formData.append('password', document.getElementById('registerPassword').value);
-
             const response = await fetch('/api/register', {
                 method: 'POST',
-                body: formData
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user: document.getElementById('registerAccount').value,
+                    credential: document.getElementById('registerSecret').value
+                })
             });
 
             if (response.ok) {
@@ -411,5 +405,7 @@ const socket = new WebSocket('ws://localhost:3000/ws');
             document.getElementById('addFriendForm').style.display = 'block';
         }
     </script>
+</body>
+</html>
 </body>
 </html>
