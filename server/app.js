@@ -38,14 +38,34 @@ app.use(
 
 // 用户认证中间件
 const jwt = require("jsonwebtoken");
-const authenticate = (req, res, next) => {
+const authenticate = async (req, res, next) => {
+  console.log('请求头:', req.headers);
+  console.log('完整Cookies:', req.cookies);
   const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
+  console.log('提取的Token:', token);
+  console.log('请求路径:', req.originalUrl); // 新增请求路径日志
   if (!token) return res.status(401).json({ error: "未授权" });
 
   try {
-    req.user = jwt.verify(token, "your_jwt_secret");
+    const decoded = jwt.verify(token, "your_jwt_secret");
+    console.log('解码后的Token:', decoded);
+    
+    // 添加数据库验证确保用户存在
+    const [user] = await pool.execute(
+      'SELECT user_id FROM users WHERE user_id = ?',
+      [decoded.userId]
+    );
+    
+    if (user.length === 0) {
+      console.log('令牌用户不存在:', decoded.userId);
+      return res.status(401).json({ error: "用户不存在" });
+    }
+    
+    req.user = decoded;
     next();
   } catch (err) {
+    console.error('令牌验证失败:', err.message);
+    res.clearCookie('token'); // 自动清除无效cookie
     res.status(401).json({ error: "无效的令牌" });
   }
 };
@@ -105,11 +125,6 @@ const multer = require('multer');
 // 用户认证路由
 app.post('/api/register', async (req, res) => {
     try {
-    // 处理字段名兼容性并去除空格
-    // 统一处理字段名大小写问题
-    // 调试日志记录原始请求体
-    // 统一处理字段名格式
-    // 增强字段名兼容性处理 (支持常见大小写变体)
     console.log('请求头:', req.headers);  // 新增请求头日志
     // 定义字段名兼容性处理函数
     const getField = (fieldName) => {
@@ -196,9 +211,7 @@ app.post('/api/register', async (req, res) => {
         requirements: ['至少8个字符']
       });
     }
-    
-    // 强制生成SHA256哈希 (修复未哈希问题)
-    // 强制生成SHA256哈希 (确保使用原始密码)
+
     // 使用处理后的password变量而非直接访问req.body
     const hashedPassword = require('crypto')
       .createHash('sha256')
@@ -210,9 +223,23 @@ app.post('/api/register', async (req, res) => {
     // 添加数据库连接测试
     const conn = await pool.getConnection();
     try {
+    // 添加用户名唯一性检查
+    const [existing] = await conn.execute(
+      'SELECT user_id FROM users WHERE username = ?',
+      [username]
+    );
+    
+    if (existing.length > 0) {
+      return res.status(400).json({ error: '用户名已存在' });
+    }
+
+    // 使用UUID生成唯一用户ID
+    const { v4: uuidv4 } = require('uuid');
+    const newUserId = uuidv4();
+
     const [result] = await conn.execute(
-        'INSERT INTO users (user_id, username, password_hash) VALUES (UUID(), ?, ?)',
-        [username, hashedPassword]
+        'INSERT INTO users (user_id, username, password_hash) VALUES (?, ?, ?)',
+        [newUserId, username, hashedPassword]
     );
     
     // 自动生成JWT并登录
@@ -222,8 +249,9 @@ app.post('/api/register', async (req, res) => {
         [username]
     );
     
+    // 直接使用明文UUID作为用户标识
     const token = jwt.sign(
-        { userId: newUser[0].user_id, username: username },
+        { userId: newUserId, username: username }, // 使用原始UUID
         'your_jwt_secret',
         { expiresIn: '7d' }
     );
@@ -253,6 +281,19 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
+// 获取当前用户信息
+app.get('/api/me', authenticate, async (req, res) => {
+    try {
+        const [user] = await pool.execute(
+            'SELECT user_id, username, avatar FROM users WHERE user_id = ?',
+            [req.user.userId]
+        );
+        res.json(user[0]);
+    } catch (err) {
+        res.status(500).json({ error: '获取用户信息失败' });
+    }
+});
+
 app.post('/api/login', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -275,12 +316,16 @@ app.post('/api/login', async (req, res) => {
     res.cookie('token', token, { 
       httpOnly: true,
       maxAge: 7 * 24 * 3600 * 1000,
-      sameSite: 'lax'
+      sameSite: 'None', // 跨域需要设置为None
+      secure: true,     // 配合SameSite=None必须启用Secure
+      domain: 'localhost',
+      path: '/'
     }).json({ 
       user: {
         id: users[0].user_id,
         username: users[0].username
-      }
+      },
+      token: token
     });
   } catch (err) {
     res.status(500).json({ error: '登录失败' });

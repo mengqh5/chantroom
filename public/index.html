@@ -232,10 +232,10 @@ const socket = new WebSocket('ws://localhost:3000/ws');
         // 添加消息到列表
         function appendMessage(msg) {
             const div = document.createElement('div');
-            div.className = `message ${msg.sender === '当前用户' ? 'self' : ''}`;
+            div.className = `message ${msg.senderId === currentUser.user_id ? 'self' : ''}`;
             div.innerHTML = `
                 <div class="message-header">
-                    <strong>${msg.sender}</strong>
+                    <strong>${msg.sender_name}</strong>
                     <small>${new Date(msg.timestamp).toLocaleTimeString()}</small>
                 </div>
                 <div class="message-content">${msg.content}</div>
@@ -244,10 +244,25 @@ const socket = new WebSocket('ws://localhost:3000/ws');
         }
 
         // 认证相关功能
-        let currentUser = null;
+        let currentUser = { user_id: null, username: null };
 
-        // 显示登录注册界面
-        document.addEventListener('DOMContentLoaded', () => {
+        // 初始化检查登录状态
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = getCookie('token');
+            if (token) {
+                try {
+                    const response = await fetch('/api/me', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.ok) {
+                        currentUser = await response.json();
+                        showMainApp();
+                        return;
+                    }
+                } catch (err) {
+                    console.error('自动登录失败:', err);
+                }
+            }
             document.getElementById('authFlow').style.display = 'block';
         });
 
@@ -264,6 +279,8 @@ const socket = new WebSocket('ws://localhost:3000/ws');
             const data = await response.json();
             if (response.ok) {
                 currentUser = data.user;
+                document.cookie = `token=${data.token}; path=/; max-age=${7 * 24 * 3600}; SameSite=None; Secure=false`;
+                console.log('Cookie设置详情:', document.cookie);
                 showMainApp();
             } else {
                 alert(data.error);
@@ -368,7 +385,7 @@ const socket = new WebSocket('ws://localhost:3000/ws');
             div.className = `message private`;
             div.innerHTML = `
                 <div class="message-header">
-                    <strong>私聊来自 ${msg.sender}</strong>
+                    <strong>${msg.sender}</strong>
                     <small>${new Date(msg.timestamp).toLocaleTimeString()}</small>
                 </div>
                 <div class="message-content">${msg.content}</div>
@@ -382,14 +399,6 @@ const socket = new WebSocket('ws://localhost:3000/ws');
             // 实现私聊会话初始化逻辑
         }
 
-        // 头像预览
-        document.getElementById('avatarInput').addEventListener('change', function(e) {
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                document.getElementById('avatarPreview').src = event.target.result;
-            }
-            reader.readAsDataURL(e.target.files[0]);
-        });
 
         function showRegister() {
             document.getElementById('registerForm').style.display = 'block';

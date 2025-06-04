@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 function initializeWebSocket(wss, pool, sessionStore) {
   const userConnections = new Map();
 
-  wss.on("connection", (ws, req) => {
+  wss.on("connection", async (ws, req) => {
     // 从cookie获取token
     const cookies = req.headers.cookie?.split(';').reduce((acc, cookie) => {
       const [name, value] = cookie.trim().split('=');
@@ -25,7 +25,12 @@ function initializeWebSocket(wss, pool, sessionStore) {
       userConnections.set(userId, ws);
 
       ws.userId = userId;
-      ws.username = decoded.username;
+      // 实时查询数据库获取最新用户名
+      const [user] = await pool.execute(
+        'SELECT username FROM users WHERE user_id = ?',
+        [userId]
+      );
+      ws.username = user[0].username;
 
       // 通知好友上线状态
       broadcastToFriends(userId, 'online');
@@ -53,7 +58,7 @@ function initializeWebSocket(wss, pool, sessionStore) {
               type: 'friend-update',
               status: 'accepted',
               friendId: userId,
-              username: decoded.username
+              username: user[0].username
             });
 
             ws.send(JSON.stringify({
@@ -78,23 +83,32 @@ function initializeWebSocket(wss, pool, sessionStore) {
             [sessionId, userId, msg.type, msg.content]
           );
 
+          // 实时查询最新用户名（使用不同变量名避免作用域冲突）
+          const [currentUser] = await pool.execute(
+            'SELECT username FROM users WHERE user_id = ?',
+            [userId]
+          );
+          
           // 构造广播消息体
           const broadcastMsg = {
             ...msg,
             sessionId: sessionId,
             messageId: result.insertId,
-            sender: decoded.username,
-            timestamp: new Date().toISOString()
+            sender_name: currentUser[0].username, // 数据库实时用户名
+            senderId: userId,
+            timestamp: new Date().toISOString(),
+            isGroup: msg.chatType === 'group'
           };
 
           // 消息路由
           if (msg.chatType === 'private') {
-            // 私聊只发送给目标用户
+            // 私聊发送给双方
             sendToUser(msg.targetId, broadcastMsg);
+            ws.send(JSON.stringify(broadcastMsg)); // 回发给发送者
           } else {
-            // 群聊广播
+            // 群聊广播给所有在线用户
             wss.clients.forEach(client => {
-              if (client.readyState === WebSocket.OPEN && client !== ws) {
+              if (client.readyState === WebSocket.OPEN) {
                 client.send(JSON.stringify(broadcastMsg));
               }
             });
@@ -128,13 +142,15 @@ function initializeWebSocket(wss, pool, sessionStore) {
 
           const privateMessages = await Promise.all(friends.map(async friend => {
             const sessionId = [userId, friend.friend_id].sort().join('_');
-            const [messages] = await pool.execute(
-              `SELECT * FROM messages 
-               WHERE session_id = ?
-               ORDER BY created_at DESC 
-               LIMIT 20`,
-              [sessionId]
-            );
+          const [messages] = await pool.execute(
+            `SELECT m.*, u.username as sender_name 
+             FROM messages m
+             JOIN users u ON m.sender_id = u.user_id
+             WHERE session_id = ?
+             ORDER BY created_at DESC 
+             LIMIT 20`,
+            [sessionId]
+          );
             return messages;
           }));
 
