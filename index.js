@@ -84,6 +84,18 @@ app.get('/users', (req, res) => {
     });
 });
 
+app.get('/history/:userId/:receiverId', (req, res) => {
+    const { userId, receiverId } = req.params;
+    const query = 'SELECT * FROM messages WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?) ORDER BY timestamp ASC';
+    db.query(query, [userId, receiverId, receiverId, userId], (err, results) => {
+        if (err) {
+            res.status(500).send(err.message);
+            return;
+        }
+        res.send(results);
+    });
+});
+
 // Socket.IO for real-time messaging
 io.on('connection', (socket) => {
     console.log('A user connected');

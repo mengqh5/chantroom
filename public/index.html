@@ -190,31 +190,38 @@
 <div id="chat-container" style="display: none;">
     <div id="current-user" style="margin-bottom: 10px; font-weight: bold;"></div>
 <div id="sidebar">
-            <button id="chatroom-button" onclick="loadChatroomMessages()">聊天室</button>
+<button id="chatroom-button" onclick="loadChatroomMessages()">聊天室</button>
+<button id="history-button" onclick="toggleHistory()">查看历史记录</button>
+<button id="clear-cache-button" onclick="clearChatCache()">清除聊天记录缓存</button>
             <h3>用户列表</h3>
             <ul id="user-list"></ul>
         </div>
-        <div id="main-chat">
-            <div id="messages"></div>
-            <div id="emoji-buttons">
-                <button onclick="insertEmoji('😊')">😊</button>
-                <button onclick="insertEmoji('🤔')">🤔</button>
-                <button onclick="insertEmoji('❤️')">❤️</button>
-                <button onclick="insertEmoji('😂')">😂</button>
-                <button onclick="insertEmoji('😄')">😄</button>
-                <button onclick="insertEmoji('😢')">😢</button>
-                <button onclick="insertEmoji('😍')">😍</button>
-            </div>
-            <div id="image-upload">
-                <label for="fileInput">上传图片</label>
-                <input type="file" id="fileInput" accept="image/*" onchange="handleImageUpload(event)">
-            </div>
-            <form id="message-form" onsubmit="sendMessage(event)">
-                <input type="text" id="message-input" placeholder="输入消息...">
-                <button type="submit" id="send-button">发送</button>
-            </form>
-        </div>
+<div id="main-chat">
+    <div id="history-chat" style="display: none;">
+        <h3>历史记录</h3>
+        <div id="history-messages"></div>
     </div>
+    <div id="current-chat" style="display: block;">
+        <div id="messages"></div>
+        <div id="emoji-buttons">
+            <button onclick="insertEmoji('😊')">😊</button>
+            <button onclick="insertEmoji('🤔')">🤔</button>
+            <button onclick="insertEmoji('❤️')">❤️</button>
+            <button onclick="insertEmoji('😂')">😂</button>
+            <button onclick="insertEmoji('😄')">😄</button>
+            <button onclick="insertEmoji('😢')">😢</button>
+            <button onclick="insertEmoji('😍')">😍</button>
+        </div>
+        <div id="image-upload">
+            <label for="fileInput">上传图片</label>
+            <input type="file" id="fileInput" accept="image/*" onchange="handleImageUpload(event)">
+        </div>
+        <form id="message-form" onsubmit="sendMessage(event)">
+            <input type="text" id="message-input" placeholder="输入消息...">
+            <button type="submit" id="send-button">发送</button>
+        </form>
+    </div>
+</div>
 <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
 <script>
     const socket = io();
@@ -364,10 +371,13 @@ function loadUsers(users) {
         const userItem = document.createElement('li');
         userItem.dataset.userId = user.id;
         userItem.innerHTML = `<span class="status-indicator offline"></span>${user.username}`;
-        userItem.onclick = () => {
-            currentReceiverId = user.id;
-            loadMessagesFromLocalStorage();
-        };
+userItem.onclick = () => {
+    currentReceiverId = user.id;
+    loadMessagesFromLocalStorage();
+    if (document.getElementById('history-chat').style.display === 'block') {
+        loadHistoryMessages();
+    }
+};
         userList.appendChild(userItem);
 
         // Check if the user is online based on the onlineUsers object
@@ -413,7 +423,58 @@ function loadUsers(users) {
     });
 
     socket.on('receiveMessage', saveMessageToLocalStorage);
-    socket.on('receiveMessage', showMessage);
+socket.on('receiveMessage', showMessage);
+
+function toggleHistory() {
+    const historyChat = document.getElementById('history-chat');
+    const currentChat = document.getElementById('current-chat');
+
+    if (historyChat.style.display === 'none') {
+        historyChat.style.display = 'block';
+        currentChat.style.display = 'none';
+        loadHistoryMessages();
+    } else {
+        historyChat.style.display = 'none';
+        currentChat.style.display = 'block';
+    }
+}
+
+function loadHistoryMessages() {
+    const historyMessagesContainer = document.getElementById('history-messages');
+    historyMessagesContainer.innerHTML = '';
+
+    fetch(`/history/${userId}/${currentReceiverId}`)
+        .then(response => response.json())
+        .then(messages => {
+            messages.forEach(showMessageInHistory);
+        })
+        .catch(error => console.error('Error loading history messages:', error));
+}
+
+function showMessageInHistory(message) {
+    const historyMessagesContainer = document.getElementById('history-messages');
+    const messageElement = document.createElement('div');
+    messageElement.classList.add('message');
+    if (message.senderId === userId) {
+        messageElement.classList.add('sent');
+    }
+    if (message.type === 'text') {
+        messageElement.textContent = message.content;
+    } else if (message.type === 'emoji') {
+        messageElement.innerHTML = `<span class="emoji">${message.content}</span>`;
+    } else if (message.type === 'image') {
+        messageElement.innerHTML = `<img src="${message.content}" alt="Image">`;
+    }
+    historyMessagesContainer.appendChild(messageElement);
+}
+
+function clearChatCache() {
+    if (confirm('您确定要清除聊天记录缓存吗？')) {
+        localStorage.removeItem('chatMessages');
+        loadMessages([]);
+        alert('聊天记录缓存已清除');
+    }
+}
 </script>
 </body>
 </html>
