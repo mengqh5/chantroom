@@ -173,8 +173,8 @@
         <button onclick="register()">注册</button>
         <p>已有账号？<a href="#" onclick="showLogin()">登录</a></p>
     </div>
-    <div id="chat-container">
-        <div id="sidebar">
+<div id="chat-container" style="display: none;">
+<div id="sidebar">
             <button id="chatroom-button" onclick="loadChatroomMessages()">聊天室</button>
             <h3>用户列表</h3>
             <ul id="user-list"></ul>
@@ -200,37 +200,38 @@
             </form>
         </div>
     </div>
-    <script src="/socket.io/socket.io.js"></script>
+<script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
     <script>
         const socket = io();
 
         let userId;
         let currentReceiverId = null; // No default receiver
 
-        function login() {
-            const username = document.getElementById('login-username').value;
-            const password = document.getElementById('login-password').value;
+function login() {
+    const username = document.getElementById('login-username').value;
+    const password = document.getElementById('login-password').value;
 
-            fetch('/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ username, password })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.userId) {
-                    userId = data.userId;
-                    document.getElementById('login-container').classList.remove('active');
-                    document.getElementById('chat-container').style.display = 'flex';
-                    loadUsers(data.users);
-                } else {
-                    alert(data.message);
-                }
-            })
-            .catch(error => console.error('Error:', error));
+    fetch('/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, password })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.userId) {
+            userId = data.userId;
+            document.getElementById('login-container').classList.remove('active');
+            document.getElementById('chat-container').style.display = 'flex';
+            loadUsers(data.users);
+            console.log('Login successful, chat-container display set to flex');
+        } else {
+            alert(data.message);
         }
+    })
+    .catch(error => console.error('Error:', error));
+}
 
         function register() {
             const username = document.getElementById('register-username').value;
