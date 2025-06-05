@@ -553,7 +553,7 @@
     let currentReceiverId = null;
     let onlineUsers = {};
 
-    // 登录逻辑（保持原有接口不变）
+    // 登录逻辑
     function login() {
         const username = document.getElementById('login-username').value;
         const password = document.getElementById('login-password').value;
@@ -580,7 +580,7 @@
         });
     }
 
-    // 注册逻辑（保持原有接口不变）
+    // 注册逻辑
     function register() {
         const username = document.getElementById('register-username').value;
         const password = document.getElementById('register-password').value;
@@ -602,7 +602,7 @@
         });
     }
 
-    // 发送消息（保持原有接口不变）
+    // 发送消息
     function sendMessage(event) {
         event.preventDefault();
         const content = document.getElementById('message-input').value;
@@ -671,14 +671,14 @@
         });
     }
 
-    // 表情插入（保持原有逻辑）
+    // 表情插入
     function insertEmoji(emoji) {
         const input = document.getElementById('message-input');
         input.value += emoji;
         input.focus();
     }
 
-    // 图片上传（保持原有逻辑）
+    // 图片上传
     function handleImageUpload(event) {
         const file = event.target.files[0];
         if (file) {
@@ -709,7 +709,7 @@
         document.getElementById('register-container').style.display = 'flex';
     }
 
-    // 接收消息（保持原有逻辑）
+    // 接收消息（
     socket.on('receiveMessage', (message) => {
         showMessage(message);
         saveMessageToLocalStorage(message);
@@ -725,7 +725,7 @@ function toggleEmojiPicker() {
     }
 }
 
-    // 本地存储相关（保持原有逻辑）
+    // 本地存储相关
     function saveMessageToLocalStorage(message) {
         const messages = JSON.parse(localStorage.getItem('chatMessages')) || [];
         messages.push(message);
