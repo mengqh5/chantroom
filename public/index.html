@@ -4,158 +4,172 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>聊天室</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-        }
-        #sidebar {
-            width: 20%;
-            max-width: 200px;
-            border-right: 1px solid #ccc;
-            padding: 10px;
-            box-sizing: border-box;
-            background-color: #f9f9f9;
-        }
-        #user-list {
-            list-style-type: none;
-            padding: 0;
-        }
-        #user-list li {
-            padding: 10px;
-            border-bottom: 1px solid #ddd;
-            cursor: pointer;
-        }
-        #user-list li:hover {
-            background-color: #e0e0e0;
-        }
-        #chat-container {
-            width: 80%;
-            box-sizing: border-box;
-            padding: 10px;
-        }
-        #messages {
-            height: 400px;
-            overflow-y: scroll;
-            padding: 10px;
-            background-color: #f4f4f4;
-            margin-bottom: 10px;
-        }
-        #message-form {
-            display: flex;
-            width: 100%;
-        }
-        #message-input {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        #send-button {
-            padding: 10px 20px;
-            border: none;
-            background-color: #007bff;
-            color: white;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-left: 10px;
-        }
-        #send-button:hover {
-            background-color: #0056b3;
-        }
-        .message {
-            margin: 10px 0;
-            padding: 10px;
-            border-radius: 4px;
-            background-color: #e0f7fa;
-        }
-        .message.sent {
-            background-color: #e8f5e9;
-        }
-        .message img {
-            max-width: 100%;
-            height: auto;
-        }
-        .message .emoji {
-            font-size: 24px;
-        }
-        #login-container, #register-container {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        #login-container.active, #register-container.active {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-        }
-        #login-container input, #register-container input {
-            margin: 10px 0;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            width: 80%;
-            max-width: 300px;
-        }
-        #login-container button, #register-container button {
-            padding: 10px 20px;
-            border: none;
-            background-color: #007bff;
-            color: white;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        #login-container button:hover, #register-container button:hover {
-            background-color: #0056b3;
-        }
-        #emoji-buttons {
-            margin-top: 10px;
-        }
-        #emoji-buttons button {
-            padding: 5px;
-            border: none;
-            background-color: transparent;
-            cursor: pointer;
-            font-size: 24px;
-        }
-        #emoji-buttons button:hover {
-            background-color: #f0f0f0;
-        }
-        #image-upload {
-            margin-top: 10px;
-        }
-        #image-upload input[type="file"] {
-            display: none;
-        }
-        #image-upload label {
-            padding: 10px 20px;
-            border: none;
-            background-color: #007bff;
-            color: white;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        #image-upload label:hover {
-            background-color: #0056b3;
-        }
-        #chatroom-button {
-            padding: 10px 20px;
-            border: none;
-            background-color: #007bff;
-            color: white;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-bottom: 10px;
-        }
-        #chatroom-button:hover {
-            background-color: #0056b3;
-        }
-    </style>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+    }
+    #sidebar {
+        width: 20%;
+        max-width: 200px;
+        border-right: 1px solid #ccc;
+        padding: 10px;
+        box-sizing: border-box;
+        background-color: #f9f9f9;
+    }
+    #user-list {
+        list-style-type: none;
+        padding: 0;
+    }
+    #user-list li {
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+    }
+    #user-list li:hover {
+        background-color: #e0e0e0;
+    }
+    #user-list .status-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 10px;
+    }
+    #user-list .online {
+        background-color: green;
+    }
+    #user-list .offline {
+        background-color: gray;
+    }
+    #chat-container {
+        width: 80%;
+        box-sizing: border-box;
+        padding: 10px;
+    }
+    #messages {
+        height: 400px;
+        overflow-y: scroll;
+        padding: 10px;
+        background-color: #f4f4f4;
+        margin-bottom: 10px;
+    }
+    #message-form {
+        display: flex;
+        width: 100%;
+    }
+    #message-input {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+    #send-button {
+        padding: 10px 20px;
+        border: none;
+        background-color: #007bff;
+        color: white;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-left: 10px;
+    }
+    #send-button:hover {
+        background-color: #0056b3;
+    }
+    .message {
+        margin: 10px 0;
+        padding: 10px;
+        border-radius: 4px;
+        background-color: #e0f7fa;
+    }
+    .message.sent {
+        background-color: #e8f5e9;
+    }
+    .message img {
+        max-width: 100%;
+        height: auto;
+    }
+    .message .emoji {
+        font-size: 24px;
+    }
+    #login-container, #register-container {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    #login-container.active, #register-container.active {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+    }
+    #login-container input, #register-container input {
+        margin: 10px 0;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        width: 80%;
+        max-width: 300px;
+    }
+    #login-container button, #register-container button {
+        padding: 10px 20px;
+        border: none;
+        background-color: #007bff;
+        color: white;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    #login-container button:hover, #register-container button:hover {
+        background-color: #0056b3;
+    }
+    #emoji-buttons {
+        margin-top: 10px;
+    }
+    #emoji-buttons button {
+        padding: 5px;
+        border: none;
+        background-color: transparent;
+        cursor: pointer;
+        font-size: 24px;
+    }
+    #emoji-buttons button:hover {
+        background-color: #f0f0f0;
+    }
+    #image-upload {
+        margin-top: 10px;
+    }
+    #image-upload input[type="file"] {
+        display: none;
+    }
+    #image-upload label {
+        padding: 10px 20px;
+        border: none;
+        background-color: #007bff;
+        color: white;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    #image-upload label:hover {
+        background-color: #0056b3;
+    }
+    #chatroom-button {
+        padding: 10px 20px;
+        border: none;
+        background-color: #007bff;
+        color: white;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-bottom: 10px;
+    }
+    #chatroom-button:hover {
+        background-color: #0056b3;
+    }
+</style>
 </head>
 <body>
     <div id="login-container" class="active">
@@ -174,6 +188,7 @@
         <p>已有账号？<a href="#" onclick="showLogin()">登录</a></p>
     </div>
 <div id="chat-container" style="display: none;">
+    <div id="current-user" style="margin-bottom: 10px; font-weight: bold;"></div>
 <div id="sidebar">
             <button id="chatroom-button" onclick="loadChatroomMessages()">聊天室</button>
             <h3>用户列表</h3>
@@ -201,177 +216,204 @@
         </div>
     </div>
 <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
-    <script>
-        const socket = io();
+<script>
+    const socket = io();
 
-        let userId;
-        let currentReceiverId = null; // No default receiver
+    let userId;
+    let currentReceiverId = null; // No default receiver
+    let onlineUsers = {};
 
-function login() {
-    const username = document.getElementById('login-username').value;
-    const password = document.getElementById('login-password').value;
+    function login() {
+        const username = document.getElementById('login-username').value;
+        const password = document.getElementById('login-password').value;
 
-    fetch('/login', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ username, password })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.userId) {
-            userId = data.userId;
-            document.getElementById('login-container').classList.remove('active');
-            document.getElementById('chat-container').style.display = 'flex';
-            loadUsers(data.users);
-            console.log('Login successful, chat-container display set to flex');
-        } else {
-            alert(data.message);
-        }
-    })
-    .catch(error => console.error('Error:', error));
+        fetch('/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.userId) {
+                userId = data.userId;
+                document.getElementById('login-container').classList.remove('active');
+                document.getElementById('chat-container').style.display = 'flex';
+                document.getElementById('current-user').textContent = `当前用户: ${data.username}`;
+                loadUsers(data.users);
+                console.log('Login successful, chat-container display set to flex');
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function register() {
+        const username = document.getElementById('register-username').value;
+        const password = document.getElementById('register-password').value;
+        const email = document.getElementById('register-email').value;
+
+        fetch('/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password, email })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.userId) {
+                alert('注册成功，请登录');
+                showLogin();
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+function sendMessage(event) {
+    event.preventDefault();
+    const content = document.getElementById('message-input').value;
+    if (!content) return;
+
+    const message = {
+        senderId: userId,
+        receiverId: currentReceiverId !== null ? currentReceiverId : userId, // Default to senderId if no receiver is selected
+        content,
+        type: 'text',
+        timestamp: new Date()
+    };
+
+    socket.emit('sendMessage', message);
+    document.getElementById('message-input').value = '';
 }
 
-        function register() {
-            const username = document.getElementById('register-username').value;
-            const password = document.getElementById('register-password').value;
-            const email = document.getElementById('register-email').value;
-
-            fetch('/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ username, password, email })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.userId) {
-                    alert('注册成功，请登录');
-                    showLogin();
-                } else {
-                    alert(data.message);
-                }
-            })
-            .catch(error => console.error('Error:', error));
+    function showMessage(message) {
+        const messagesContainer = document.getElementById('messages');
+        const messageElement = document.createElement('div');
+        messageElement.classList.add('message');
+        if (message.senderId === userId) {
+            messageElement.classList.add('sent');
         }
+        if (message.type === 'text') {
+            messageElement.textContent = message.content;
+        } else if (message.type === 'emoji') {
+            messageElement.innerHTML = `<span class="emoji">${message.content}</span>`;
+        } else if (message.type === 'image') {
+            messageElement.innerHTML = `<img src="${message.content}" alt="Image">`;
+        }
+        messagesContainer.appendChild(messageElement);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
 
-        function sendMessage(event) {
-            event.preventDefault();
-            const content = document.getElementById('message-input').value;
-            if (!content) return;
+    function showLogin() {
+        document.getElementById('login-container').classList.add('active');
+        document.getElementById('register-container').classList.remove('active');
+    }
 
-            const message = {
-                senderId: userId,
-                receiverId: currentReceiverId,
-                content,
-                type: 'text',
-                timestamp: new Date()
+    function showRegister() {
+        document.getElementById('login-container').classList.remove('active');
+        document.getElementById('register-container').classList.add('active');
+    }
+
+    function insertEmoji(emoji) {
+        const messageInput = document.getElementById('message-input');
+        messageInput.value += emoji;
+    }
+
+    function handleImageUpload(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const base64Image = e.target.result;
+                const message = {
+                    senderId: userId,
+                    receiverId: currentReceiverId,
+                    content: base64Image,
+                    type: 'image',
+                    timestamp: new Date()
+                };
+                socket.emit('sendMessage', message);
+                document.getElementById('message-input').value = '';
             };
-
-            socket.emit('sendMessage', message);
-            document.getElementById('message-input').value = '';
+            reader.readAsDataURL(file);
         }
+    }
 
-        function showMessage(message) {
-            const messagesContainer = document.getElementById('messages');
-            const messageElement = document.createElement('div');
-            messageElement.classList.add('message');
-            if (message.senderId === userId) {
-                messageElement.classList.add('sent');
-            }
-            if (message.type === 'text') {
-                messageElement.textContent = message.content;
-            } else if (message.type === 'emoji') {
-                messageElement.innerHTML = `<span class="emoji">${message.content}</span>`;
-            } else if (message.type === 'image') {
-                messageElement.innerHTML = `<img src="${message.content}" alt="Image">`;
-            }
-            messagesContainer.appendChild(messageElement);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
+    function loadMessages(messages) {
+        const messagesContainer = document.getElementById('messages');
+        messagesContainer.innerHTML = '';
+        messages.forEach(showMessage);
+        localStorage.setItem('chatMessages', JSON.stringify(messages));
+    }
 
-        function showLogin() {
-            document.getElementById('login-container').classList.add('active');
-            document.getElementById('register-container').classList.remove('active');
-        }
+    function saveMessageToLocalStorage(message) {
+        const messages = JSON.parse(localStorage.getItem('chatMessages')) || [];
+        messages.push(message);
+        localStorage.setItem('chatMessages', JSON.stringify(messages));
+    }
 
-        function showRegister() {
-            document.getElementById('login-container').classList.remove('active');
-            document.getElementById('register-container').classList.add('active');
-        }
-
-        function insertEmoji(emoji) {
-            const messageInput = document.getElementById('message-input');
-            messageInput.value += emoji;
-        }
-
-        function handleImageUpload(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const base64Image = e.target.result;
-                    const message = {
-                        senderId: userId,
-                        receiverId: currentReceiverId,
-                        content: base64Image,
-                        type: 'image',
-                        timestamp: new Date()
-                    };
-                    socket.emit('sendMessage', message);
-                    document.getElementById('message-input').value = '';
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function loadMessages(messages) {
-            const messagesContainer = document.getElementById('messages');
-            messagesContainer.innerHTML = '';
-            messages.forEach(showMessage);
-            localStorage.setItem('chatMessages', JSON.stringify(messages));
-        }
-
-        function saveMessageToLocalStorage(message) {
-            const messages = JSON.parse(localStorage.getItem('chatMessages')) || [];
-            messages.push(message);
-            localStorage.setItem('chatMessages', JSON.stringify(messages));
-        }
-
-        function loadUsers(users) {
-            const userList = document.getElementById('user-list');
-            userList.innerHTML = '';
-            users.forEach(user => {
-                const userItem = document.createElement('li');
-                userItem.textContent = user.username;
-                userItem.onclick = () => {
-                    currentReceiverId = user.id;
-                    loadMessagesFromLocalStorage();
-                };
-                userList.appendChild(userItem);
-            });
-        }
-
-        function loadMessagesFromLocalStorage() {
-            const messagesContainer = document.getElementById('messages');
-            messagesContainer.innerHTML = '';
-            const messages = JSON.parse(localStorage.getItem('chatMessages')) || [];
-            const filteredMessages = messages.filter(msg => 
-                (msg.senderId === userId && msg.receiverId === currentReceiverId) ||
-                (msg.senderId === currentReceiverId && msg.receiverId === userId)
-            );
-            filteredMessages.forEach(showMessage);
-        }
-
-        function loadChatroomMessages() {
-            currentReceiverId = null;
+function loadUsers(users) {
+    const userList = document.getElementById('user-list');
+    userList.innerHTML = '';
+    users.forEach(user => {
+        const userItem = document.createElement('li');
+        userItem.dataset.userId = user.id;
+        userItem.innerHTML = `<span class="status-indicator offline"></span>${user.username}`;
+        userItem.onclick = () => {
+            currentReceiverId = user.id;
             loadMessagesFromLocalStorage();
-        }
+        };
+        userList.appendChild(userItem);
 
-        socket.on('receiveMessage', saveMessageToLocalStorage);
-        socket.on('receiveMessage', showMessage);
-    </script>
+        // Check if the user is online based on the onlineUsers object
+        if (onlineUsers[user.id]) {
+            userItem.querySelector('.status-indicator').classList.remove('offline');
+            userItem.querySelector('.status-indicator').classList.add('online');
+        }
+    });
+}
+
+    function loadMessagesFromLocalStorage() {
+        const messagesContainer = document.getElementById('messages');
+        messagesContainer.innerHTML = '';
+        const messages = JSON.parse(localStorage.getItem('chatMessages')) || [];
+        const filteredMessages = messages.filter(msg => 
+            (msg.senderId === userId && msg.receiverId === currentReceiverId) ||
+            (msg.senderId === currentReceiverId && msg.receiverId === userId)
+        );
+        filteredMessages.forEach(showMessage);
+    }
+
+    function loadChatroomMessages() {
+        currentReceiverId = null;
+        loadMessagesFromLocalStorage();
+    }
+
+    socket.on('userOnline', (data) => {
+        onlineUsers[data.userId] = true;
+        const userItem = document.querySelector(`#user-list li[data-user-id="${data.userId}"]`);
+        if (userItem) {
+            userItem.querySelector('.status-indicator').classList.remove('offline');
+            userItem.querySelector('.status-indicator').classList.add('online');
+        }
+    });
+
+    socket.on('userOffline', (data) => {
+        delete onlineUsers[data.userId];
+        const userItem = document.querySelector(`#user-list li[data-user-id="${data.userId}"]`);
+        if (userItem) {
+            userItem.querySelector('.status-indicator').classList.remove('online');
+            userItem.querySelector('.status-indicator').classList.add('offline');
+        }
+    });
+
+    socket.on('receiveMessage', saveMessageToLocalStorage);
+    socket.on('receiveMessage', showMessage);
+</script>
 </body>
 </html>

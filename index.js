@@ -15,7 +15,8 @@ const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
     password: '123456',
-    database: 'chatroom'
+    database: 'chatroom',
+    charset: 'utf8mb4'
 });
 
 db.connect((err) => {
@@ -62,7 +63,7 @@ app.post('/login', (req, res) => {
                         res.status(500).send(usersErr.message);
                         return;
                     }
-                    res.send({ message: 'Login successful', userId, messages, users });
+res.send({ message: 'Login successful', userId, username: results[0].username, messages, users });
                 });
             });
         } else {
@@ -87,8 +88,13 @@ app.get('/users', (req, res) => {
 io.on('connection', (socket) => {
     console.log('A user connected');
 
+    // Broadcast the new user's online status to all clients
+    io.emit('userOnline', { userId: socket.id });
+
     socket.on('disconnect', () => {
         console.log('User disconnected');
+        // Broadcast the user's offline status to all clients
+        io.emit('userOffline', { userId: socket.id });
     });
 
     socket.on('sendMessage', ({ senderId, receiverId, content, type }) => {
