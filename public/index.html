@@ -337,7 +337,6 @@
             const messages = JSON.parse(localStorage.getItem('chatMessages')) || [];
             messages.push(message);
             localStorage.setItem('chatMessages', JSON.stringify(messages));
-            showMessage(message);
         }
 
         function loadUsers(users) {

@@ -99,7 +99,15 @@ io.on('connection', (socket) => {
                 return;
             }
             const messageId = result.insertId;
-            io.emit('receiveMessage', { messageId, senderId, receiverId, content, type, timestamp: new Date() });
+            const message = {
+                messageId,
+                senderId,
+                receiverId,
+                content,
+                type,
+                timestamp: new Date()
+            };
+            io.emit('receiveMessage', message);
         });
     });
 });
